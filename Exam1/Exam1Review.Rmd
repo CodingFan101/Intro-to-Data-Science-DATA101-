@@ -1,0 +1,135 @@
+---
+title: "Exam 1 Practice Problems"
+author: "Christopher Hainzl"
+output:
+  pdf_document: default
+html_document:
+df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(dplyr)
+library(dslabs)
+library(lubridate)
+library(ggpubr)
+```
+
+Several of your friends live in Europe and are offered jobs at a US company with many locations all across
+the country. The job offers are great but news with headlines such as America is one of 6 countries that
+make up more than half of guns deaths worldwide have them worried.
+You want to convince your friends that the US is a large and diverse country with 50 very different states as
+well as the District of Columbia (DC). You want to recommend some states for each friend knowing that
+some like hiking, while others would like to be close to several large cosmopolitan cities. Use data from the
+US murders data set:
+1. What is the state with the most murders? Would you say this is the most dangerous state? Hint: Make
+a plot showing the relationship between population size and number of murders.
+```{r}
+murders %>% arrange(desc(total))
+```
+```{r}
+murders %>% group_by(total) %>% ggplot(aes(x = population, y = total, col = state)) + geom_point()
+```
+Solution:
+California is the state with the most murders. However, this does not necessarily make California the most
+dangerous state. The following plot shows that the number of murders is highly correlated with the population
+of any given state. This type of pattern is to be expected as our population size increases. California, the state with the highest population, also has the highest total number of
+murders.
+
+2. Add a column to the murder data table called murder_rate with each state’s murder rate per 100,000
+people.
+Solution:
+```{r}
+rates <- murders %>% mutate(murder_rate = total / (population / 100000))
+top_rate <- rates %>% arrange(desc(murder_rate))
+top_rate
+```
+The state with the largest murder rate is District of Columbia. However, this is due to how the District of Columbia is not exactly a state, but rather a city. Individual cities (ex. NYC) can have a larger murder rate compared to the overall one in their respective state.
+
+3. Describe the distribution of murder rates across states. How similar are states? How much do murder
+rates vary by geographical regions?
+```{r}
+top_rate %>% ggplot(aes(x = murder_rate, y = region)) +
+  geom_boxplot()
+```
+```{r}
+top_rate %>%
+  ggplot(aes(x = murder_rate)) +
+  geom_histogram()
+```
+Solution:
+Among all states, the distribution of murder rates is similar in the West, North Central, and Northeast regions. However, the South region has a higher murder rate on average compared to all the other regions.
+
+4. Write a report for your friends reminding them that the US is a large and diverse country with 50 very
+different states as well as the District of Columbia (DC). Suppose one of your friends loves hiking, one
+wants to live in a warm climate, and another would like to be close to several large cosmopolitan cities.
+Recommend a desirable state for each friend. Answers should be a minimum of 1 paragraph and a
+maximum of 3 paragraphs.
+
+Solution:
+To my friend who wants to live in a warm climate, I would recommend Hawaii since it is very tropical and has the third-lowest murder rate. To my friend who loves hiking, I would recommend Vermont because not only does it have plenty of hiking trails, but it has the lowest murder rate among all the states in the country. To my friend who wants to be close to several large cosmopolitan cities, I would recommend Massachusetts since it is home to Boston and Cambridge, and also because it has a lower population compared to another state with several cosmopolitan cities like New York (meaning Massachusetts has a lower murder rate than New York).
+
+Question 2
+a. Create a function sum_n that for any given value, say n, computes the sum of the integers from 1 to n
+(inclusive). Use the function to determine the sum of integers from 1 to 200.
+1
+Solution:
+```{r}
+sum_n <- function(n){
+  sum <- 0
+  for (i in 1:n){
+    sum <- sum + i
+  }
+  sum
+}
+sum_200 <- sum_n(200)
+print(sum_200)
+```
+b. Create a function altman_plot that takes two arguments x and y and plots the difference against the
+sum.
+Solution:
+```{r}
+altman_plot <- function(x, y){
+  plot(x + y, y - x)
+}
+d1 <- c(1, 5, 6, 8, 9, 10)
+d2 <- c(2, 10, 4, 5, 1, 2)
+altman_plot(d1, d2)
+```
+Things to Consider for exams
+1. Major topics included (not an exhaustive list)
+•Data, and types of variables
+•Loading data into R
+•Data Wrangling
+•Exploratory Data Analysis: Basic Plots and Plotting with ggplot2
+•Functions and Iteration
+2. Major functions to review (not an exhaustive list)
+•read.csv()
+•head()
+•top_n()
+•group_by()
+•summarize()
+•filter()
+•mutate()
+•arrange()
+•%>%
+•function(){}
+•ggplot(); refer to cheatsheet
+•seq()
+•c()
+•data.frame()
+•which()
+•which.max()
+•which.min()
+•is.na()
+•print()
+•for()
+•ifelse()
+•mean()
+•sd()
+•sqrt()
+•sum()
+•Reviewing homework assignments, reading the lecture files, and coding the examples on your own are
+the best ways to prepare.

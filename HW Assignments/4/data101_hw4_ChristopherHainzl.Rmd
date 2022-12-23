@@ -1,0 +1,56 @@
+---
+title: "Homework 4"
+author: "Christopher Hainzl"
+date: "2022-12-02"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Question 1
+
+```{r}
+library(maps)
+big_cities <- world.cities %>%
+arrange(desc(pop)) %>%
+head(4000) %>%
+select(long, lat)
+glimpse(big_cities)
+```
+
+```{r}
+cities_k_means <- kmeans(big_cities, 400)
+cities_k_means$size
+```
+
+```{r}
+cities_k_means <- kmeans(big_cities, 600)
+cities_k_means$size
+```
+- As we increase the value of k, the sizes of some of the clusters appear to decrease, while for others, their sizes appear to increase. This makes sense because as the amount of clusters changes, it affects the amount of variance between the data points.
+
+
+# Question 2
+
+```{r}
+library(Lahman)
+hof <- Batting %>%
+group_by(playerID) %>%
+inner_join(HallOfFame, by = c("playerID" = "playerID")) %>%
+filter(inducted == "Y" & votedBy == "BBWAA") %>%
+summarize(tH = sum(H), tHR = sum(HR), tRBI = sum(RBI), tSB = sum(SB)) %>%
+filter(tH > 1000)
+```
+```{r}
+hof_filtered <- hof[,c(2:5)]
+```
+
+```{r}
+hof_clustered <- kmeans(hof_filtered, 20)
+hof_clustered
+```
+
+- The properties that seem common to each cluster are having very large mean values for the 'tH' and 'tRBI' columns, as well as mean values for the 'tHR' and 'tSB' columns that are (for the most part) relatively smaller in comparison.

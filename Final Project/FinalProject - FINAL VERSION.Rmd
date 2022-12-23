@@ -1,0 +1,206 @@
+---
+title: "Final Project"
+author: "Ryan Podzielny, Christopher Hainzl, Christopher Barbieri, Christopher Hakkenberg, Peter Bitanga"
+date: "2022-12-16"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r }
+library(tidyverse)
+library(ggridges)
+library(car)
+```
+
+```{r}
+PS4 <- read.csv("PS4_GamesSales.csv")
+XboxOne <- read.csv("XboxOne_GameSales.csv")
+sales <- read.csv("Video_Games_Sales_as_at_22_Dec_2016.csv")
+
+# Checking for missing values
+colSums(is.na(PS4))
+colSums(is.na(XboxOne))
+colSums(is.na(sales))
+
+dim(sales)
+
+# Removing the missing data from years (only 19 cases)
+glimpse(sales$Year_of_Release)
+counts <- table(sales$Year_of_Release)
+counts <- as.data.frame(counts)
+counts <- counts %>% filter(Var1 != "N/A")
+
+# Line graph of publications over the years
+p <- ggplot(data=counts, aes(x=Var1, y=Freq, group=1)) +
+  geom_line(color="blue") +
+  xlab("Year of Release") +
+  ylab("Number of Titles") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+p
+
+```
+
+
+```{r}
+# Basically get the highest sales
+pubs_count <- table(sales$Publisher)
+pubs_count <- as.data.frame(pubs_count)
+
+colnames(pubs_count) <- c("pubs", "total_games")
+
+pubs <- c(pubs_count$pubs)
+
+sale_total <- c()
+
+for (x in pubs) {
+  currPub <- sales %>% filter(Publisher == x)
+  total <- sum(currPub$Global_Sales)
+  sale_total <- append(sale_total, total)
+}
+
+sale_numbers <- data.frame(pubs, sale_total)
+
+```
+
+
+```{r}
+# Total sales and games published by companies we are looking at
+sale_numbers <- sale_numbers %>% arrange(desc(sale_total))
+pubs_count <- pubs_count %>% arrange(desc(total_games))
+
+head(sale_numbers)
+head(pubs_count)
+
+pubs_wanted = c("Nintendo", "Electronic Arts", "Microsoft Game Studios", "Sony Computer Entertainment")
+
+looking <- sale_numbers %>% left_join(pubs_count, by="pubs")
+looking <- looking %>% filter(pubs %in% pubs_wanted)
+looking
+```
+
+```{r}
+# Get the yearly sales for each game
+new_pubs <- sales %>% filter(Publisher %in% pubs_wanted)
+# Dropping the N/A (weren't normal NA's but rather strings)
+new_pubs <- new_pubs %>% filter(Year_of_Release != "N/A")
+
+# Transform
+new_pubs$Global_Sales <- log10(new_pubs$Global_Sales)
+
+new_pubs %>% ggplot(aes(x = Global_Sales, y = Publisher, fill = Publisher)) +
+  geom_density_ridges() +
+  theme(legend.position = "none") +
+  labs(
+    x = "Global Sales",
+    y = "Publisher",
+    title = "Total Global Sales of Top Publishers",
+    subtitle = "With a Log 10 Transformation"
+  )
+
+ggplot(new_pubs, aes(x=Publisher, y=Global_Sales, color=Publisher)) +
+  geom_boxplot() + coord_flip() +
+  labs(
+    y = "Global Sales",
+    x = "Publisher",
+    title = "Total Global Sales of Top Publishers",
+    subtitle = "With a Log 10 Transformation"
+  )
+
+years <- unique(new_pubs$Year_of_Release)
+years <- sort(years, decreasing = FALSE)
+
+size <- length(years) + 1
+
+sales_per_year <- data.frame(matrix(ncol = size, nrow = 0))
+colnames(sales_per_year) <- c("pubs", years)
+
+# Basically for each company we want, we add the total sales for each year
+for (x in pubs_wanted) {
+  # Get only one publisher
+  currPub <- new_pubs %>% filter(Publisher == x)
+  # Pub needs to be the in the first column
+  year_tots <- c(x)
+  for (year in years) {
+    # Get the year we are on
+    pub_year <- currPub %>% filter(Year_of_Release == year)
+    # Add them all up and append to vector
+    tot_sales_year <- sum(pub_year$Global_Sales)
+    year_tots <- append(year_tots, tot_sales_year)
+  }
+  # Add as row
+  sales_per_year[nrow(sales_per_year) + 1,] = year_tots
+}
+
+sales_per_year[,2:ncol(sales_per_year)] <- sapply(sales_per_year[,2:ncol(sales_per_year)], as.numeric)
+sales_per_year
+```
+
+```{r}
+# Checking if global sales is right for linear regression after log transform
+qqnorm(new_pubs$Global_Sales, main="Q-Q Plot of Global Sales Log Transformation")
+qqline(new_pubs$Global_Sales)
+hist(new_pubs$Global_Sales, xlab="Global Sales", main="Histogram of Global Sales")
+```
+
+```{r}
+# Some EDA on the critic scores 
+# Imputing missing values with mean
+new_pubs$Critic_Score[is.na(new_pubs$Critic_Score)] <- mean(new_pubs$Critic_Score, na.rm=TRUE)
+
+qqnorm(new_pubs$Critic_Score, main="Q-Q Plot of Critic Scores")
+qqline(new_pubs$Critic_Score)
+hist(new_pubs$Critic_Score, xlab="Critic Score", main="Histogram of Critic Scores")
+
+# EDA on the user cores
+# Imputing missing values with median
+new_pubs$User_Score[is.na(new_pubs$User_Score)] <- median(new_pubs$User_Score, na.rm=TRUE)
+
+qqnorm(new_pubs$User_Score, main="Q-Q Plot of User Scores")
+qqline(new_pubs$User_Score)
+hist(new_pubs$User_Score, xlab="User Score", main="User Scores")
+
+```
+```{r}
+# Linear regression model for sales and critic/user scores
+lin_reg_uc_scores <- lm(Global_Sales ~ User_Score + Critic_Score, data=new_pubs)
+
+summary(lin_reg_uc_scores)
+
+confint(lin_reg_uc_scores) # 95% confidence interval
+
+correlation_m <- data.frame(new_pubs$Global_Sales, new_pubs$User_Score, new_pubs$Critic_Score)
+cor(correlation_m)
+```
+
+
+```{r}
+# Assumption checking linear regression of sales and critic/user scores
+crPlots(lin_reg_uc_scores, main="Partial Residual Plots")
+plot(lin_reg_uc_scores,2) 
+vif(lin_reg_uc_scores) 
+```
+
+
+```{r}
+stocks <- read.csv("Stocks - DATA101 - Sheet1.csv")
+stats_combined <- looking %>% left_join(sales, by = c("pubs" = "Publisher"))
+```
+
+
+```{r}
+stats_arranged <- stats_combined %>% arrange(Year_of_Release) %>% filter(Year_of_Release >= 2004)
+stocks_with_stats <- stocks %>% inner_join(stats_arranged, by = c("company" = "pubs"))
+```
+
+```{r}
+# Linear regression for stocks
+stock_lm <- lm(change_.last. ~ sale_total, data = stocks_with_stats)
+
+summary(stock_lm)
+```

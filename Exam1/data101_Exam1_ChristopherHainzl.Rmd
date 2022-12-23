@@ -1,0 +1,277 @@
+---
+title: "Exam 1"
+author: "Christopher Hainzl"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+#| label: setup
+#| include: false
+# set the echo option to FALSE to see how the document looks with the code suppressed
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Academic Honesty Statement
+
+I, Christopher Hainzl, hereby state that I have not communicated with or gained information in any way from my classmates or anyone other than the Professor during this exam, and that all work is my own.
+
+## Load packages
+
+```{r}
+#| label: load-packages
+#| message: false
+# load required packages here
+library(readxl)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(nycflights13)
+```
+
+
+## Logistics
+
+Add your code and/or narrative in the spaces below each question. Add code chunks as needed. Use as many lines as you need, but keep your narrative concise.
+
+## Packages
+
+In addition to `tidyverse`, you will need the `nycflights13` package for the data. You will first need to install these packages and then load them. Feel free to use any other library.
+
+
+## The Data
+
+1. The `nycflights13` package contains information about all flights that departed from NYC (e.g. EWR, JFK and LGA) in 2013. The main data is in the `flights` data frame, but there are additional data sets which may help understand what causes delays, specifically:
+
+- weather: hourly meteorological data for each airport
+- planes: construction information about each plane
+- airports: airport names and locations
+- airlines: translation between two letter carrier codes and names
+
+2. The dataset `oslo-biomarkers.xlsx` contains data from a medical study about patients with disc herniations, performed at the Oslo University Hospital, Ullevål. Blood samples were collected from a number of patients with disc herniations at three time points: 0 weeks (first visit at the hospital), 6 weeks and 12 months. The levels of some biomarkers related to inflammation
+were measured in each blood sample.
+
+
+3. The dataset `oslo-covariates.xlsx` contains information about the patients, such as age, gender
+and smoking habits.
+
+## Questions
+
+### Question 1
+
+a.What does it mean for data analysis to be "reproducible"? 
+
+For a data analysis to be "reproducible" means that all the required data, software source code, and tools are distributed in a way that enables the reproduction of results discussed in a research publication.
+
+b. Discuss the toolkit for reproducibility.
+
+- Automation: repetitive tasks can be automated with scripts (which can be written in R)
+- Literate Programming: Combining code snippets with a language that can be read by humans (which can be done with R Markdown)
+- Version Control: Keeping track of changes to your work documents (which can be done using Git)
+
+### Question 2
+
+
+a. What is Exploratory data analysis (EDA)?
+
+Exploratory data analysis is when visualization, transformation, and modeling are used to explore data.
+(Cited from "R for Data Science" by Hadley Wickham and 
+Garrett Grolemund)
+
+b. Why do we visualize data? Explain using Anscombe’s quartet as a case study.
+
+
+We visualize data so that we can detect differences in how our data is distributed when summary statistics do not seem to be enough. For example, when considering Anscombe's quartet, the summary statistics for all four sets of data are identical to one another. However, once we visualize those sets, we notice that the distribution of their data is different from each other (despite the summary statistics suggesting otherwise). 
+
+### Question 3
+
+a. Write a  function called `fahr_to_celsius` that converts temperatures from
+Fahrenheit to Celsius. Print out the results when the temperature is $32^oF$.
+
+In my function, I used the formula for converting from Fahrenheit to Celsius (which involves subtracting 32 from the temperature in Fahrenheit, and then multiplying that difference by 5/9).
+```{r}
+fahr_to_celsius <- function(x){
+  # convert from Fahrenheit to Celsius
+  (x - 32) * (5/9)
+}
+# should be equal to 0
+fahr_to_celsius(32)
+```
+
+b. Write another function called `celsius_to_kelvin` that converts Celsius into Kelvin. Print out the results
+when the temperature is $0^oC$.
+
+In my function, I used the formula for converting from Celsius to Kelvin (which involves adding 273.15 to the temperature in Celsius).
+```{r}
+celsius_to_kelvin <- function(x){
+  # convert from Celsius to Kelvin
+  x + 273.15
+}
+# should be equal to 273.15
+celsius_to_kelvin(0)
+```
+
+c. Compose the two functions in Parts 3a. and 3b. into a new function called `fahr_to_kelvin`
+that converts Fahrenheit to Kelvin. Print out the results when the temperature is
+$32^oF$.
+
+To simplify this part, I called up my previous two functions and stored the results of those calls in two different variables.
+```{r}
+fahr_to_kelvin <- function(x){
+  # convert from Fahrenheit to Celsius
+  first_conversion <- fahr_to_celsius(x)
+  # convert from Celsius to Kelvin
+  final_result <- celsius_to_kelvin(first_conversion)
+}
+# should be equal to 273.15
+print(fahr_to_kelvin(32))
+```
+
+
+** For Questions 4,5, and 6, use the `nycflights13` package **
+
+### Question 4
+
+What are the ten most common destinations for flights from NYC airports in 2013? Make a table that lists these in descending order of frequency and shows the number of flight heading to each airport.
+
+To find the ten most common destinations, we need to determine how many times each destination appears in the dataframe, and arrange them in descending order. This can be done using the count(), arrange(), and desc() functions.
+
+```{r}
+# Use count() function to keep track of how many times
+# each destination appears in the dataframe
+top_10 <- flights %>% count(dest) %>% arrange(desc(n)) %>% slice(1:10)
+top_10
+```
+The ten most common destinations are ORD, ATL, LAX, BOS, MCO, CLT, SFO, FLL, MIA, and DCA.
+
+### Question 5
+
+Which airlines have the most flights departing from NYC airports in 2013? Make a table that lists these in descending order of frequency and shows the number of flights for each airline. In your narrative mention the names of the airlines as well. Hint: You can use the `airlines` dataset to look up the airline name based on carrier code.
+
+Just like with the top ten destinations, we can also use the count(), arrange(), and desc() functions.
+
+```{r}
+# Same as before, except now we have to keep track of how many
+# times each airline appears in the dataframe
+airline_flights <- flights %>% count(carrier) %>% arrange(desc(n))
+airline_flights
+```
+The top 5 airlines with the most flights departing from NYC are United Air Lines Inc., JetBlue Airways, ExpressJet Airlines Inc., Delta Air Lines Inc., and American Airlines Inc.
+
+### Question 6
+
+Consider only flights departing from New York on 1 January that year. 
+
+
+a. Are there missing data?
+
+To determine if there is any missing data, I can use the summary() function once I have filtered my data.
+
+```{r}
+# filter for flights departing on January 1
+jan_first <- flights %>% filter(month == 1, day == 1)
+# check for any missing data by using summary() function
+summary(jan_first)
+```
+Yes, there is some missing data.
+
+b. Are there any differences between the different carriers? Focusing on delays and the amount of time spent in the air.
+
+For this exercise, I chose to compare the carriers
+based on their average delays and average amount of time spent
+in the air.
+```{r}
+# summary statistics involving average departure delay,
+# average arrival delay, and average time spent in the air
+differences <- jan_first %>% group_by(carrier) %>% summarise(average_dep_delay = mean(dep_delay, na.rm = TRUE),
+                                                             average_arr_delay = mean(arr_delay, na.rm = TRUE),  
+                                                           average_air_time = mean(air_time, na.rm = TRUE))
+differences
+```
+- On average, ExpressJet Airlines Inc. has the highest departure delay, while Frontier Airlines Inc. has the lowest departure delay.
+- On average, ExpressJet Airlines Inc. has the highest arrival delay, and Alaska Airlines Inc. has the lowest arrival delay.
+- On average, Hawaiian Airlines Inc. has the highest air time, while ExpressJet Airlines Inc. has the lowest air time.
+
+c. Are there any outliers? Focusing on delays and the amount of time spent in the air.
+
+To determine if there are any outliers, we have to use a boxplot, with the carriers on the x-axis, and the delays / amount of time spent in the air on the y-axis.
+```{r}
+# Use boxplots to detect any outliers in data
+ggplot(data = jan_first, aes(x=carrier, y=dep_delay, group = carrier)) +
+geom_boxplot() + scale_y_log10()
+```
+```{r}
+ggplot(data = jan_first, aes(x=carrier, y=arr_delay, group = carrier)) +
+geom_boxplot() + scale_y_log10()
+```
+```{r}
+ggplot(data = jan_first, aes(x=carrier, y=air_time, group = carrier)) +
+geom_boxplot()
+```
+Yes, there are outliers when considering the data involving departure / arrival delays and amount of time in the air.
+
+### Question 7
+
+Load the `oslo-biomarkers.xlsx data`. Then do the following using dplyr/tidyr:
+```{r}
+oslo_biomarkers <- read_excel("oslo-biomarkers.xlsx")
+oslo_covariates <- read_excel("oslo-covariates.xlsx")
+```
+a. Split the `PatientID.timepoint` column in two parts: one with the patient ID and one with the timepoint.
+
+We need to use the separate() function to split the 'PatientID.timepoint' column into two separate columns, with the '-' symbol as our separator. Once that is done, we then have to convert the 'PatientID' column to a column of type 'numeric' (since it was originally part of a column of type 'character'). This can be done using the as.numeric() function.
+
+```{r}
+# Use separate() function to split one column into
+# two separate columns
+oslo_biomarkers_new <- oslo_biomarkers %>% 
+separate(col = "PatientID.timepoint", into = c("PatientID", "Timepoint"), sep = "-")
+# Using the as.numeric() function will benefit us later on
+oslo_biomarkers_new$PatientID <- as.numeric(oslo_biomarkers_new$PatientID)
+# Inspiration taken from: #https://stackoverflow.com/questions/7069076/split-column-at-delimter-in-data-frame
+oslo_biomarkers_new
+```
+
+b. Sort the table by patient ID, in numeric order.
+
+Now that the 'PatientID' column has been converted into a column of type 'numeric' we can sort the table in numeric order using the arrange() function.
+
+
+```{r}
+# sort using arrange() function
+oslo_biomarkers_ordered <- oslo_biomarkers_new %>% arrange(PatientID)
+oslo_biomarkers_ordered
+```
+
+c. Reformat the data from long to wide, keeping only the `IL-8` and `VEGF-A` measurements.
+
+To reformat our data, we need to use 'PatientID' as our id column, 'Timepoint' to get the names of the new columns, and 'IL-8' & 'VEGF-A' to get our values. Luckily, R's pivot_wider() function makes it possible for us to do this.
+
+```{r}
+oslo_biomarkers_reformatted <- oslo_biomarkers_ordered %>%
+  pivot_wider(id_cols = PatientID, names_from = Timepoint, values_from = c('IL-8','VEGF-A'))
+oslo_biomarkers_reformatted
+```
+
+d. Merge the wide data frame from part c. with the `oslo-covariates.xlsx` data, using patient ID as key.
+
+We can use left join the dataframe from part c with 'oslo-covariates.xlsx' to combine them together and keep all the observations from our wide dataframe.
+
+
+```{r}
+# use the left_join() function
+oslo_merged <- oslo_biomarkers_reformatted %>% left_join(oslo_covariates)
+oslo_merged
+```
+
+e. Use the `oslo-covariates.xlsx` data to select data for smokers from the wide data frame in part c.
+First, we have to filter out the data in 'oslo-covariates.xlsx' so it only shows the patients who are smokers. Then, we join the wide data frame in part c with the new, filtered one created in this part.
+```{r}
+covariate_smoker_data <- oslo_covariates %>%
+  # 1 means that the patient is a smoker
+filter(oslo_covariates$'Smoker (1=yes, 2=no)' == 1)
+  # join both dataframes using inner_join()
+oslo_biomarkers_reformatted %>% inner_join(covariate_smoker_data)
+```

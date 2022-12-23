@@ -1,0 +1,96 @@
+---
+title: "InClassAssignment4"
+author: "Christopher Hainzl, Christopher Hakkenberg, Peter Bitanga, Ryan Podzielny, Christopher Barbieri"
+output: pdf_document
+date: "2022-11-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(car)
+```
+
+Read the wire data using read_excel.
+
+```{r cars}
+wires <- read_excel("Wire_bond.xlsx")
+wires2 <- wires[,c(2:8)]
+wires3 <- wires2 %>% filter(y != "pull strength")
+wires4 <- lapply(wires3, as.numeric)
+wires5 <- data.frame(wires4)
+wires5
+attach(wires5)
+```
+
+a. We decided that a multiple linear regression would be best since there is one response variable (pull strength) and 6 predictor variables (die height, post height, loop height, wire length, bond width on the die, and bond width on the post). Since those 6 predictors could have an impact on our response, we want to see if there exists any sort of trend.
+
+First, we looked at the histogram of our response to see if there is a normal distribution and if it is good for a multiple linear regression.
+
+Although the data did not appear to have a normal distribution, we wanted to continue with the multiple linear regression. We also decided to do a correlation matrix of the data to see if we should explore further. We did see some variables correlate with the response (y), so we continued with the multiple regression.
+
+```{r pressure, echo=FALSE}
+hist(y, xlab="pull_strength", main = "Histogram of Pull Strength")
+```
+
+```{r}
+cor(wires5)
+```
+b.
+```{r}
+Multiple.model <- lm(y ~ X.1 + x2 + x3 + x4 + x5 + X.6, data = wires5)
+summary(Multiple.model)
+```
+Aside from X.1 (die height) and x3 (loop height), the standard deviation of the pull strength is negligible.
+
+Variation: 0.6772
+
+```{r}
+Multiple.model1 <- lm(y ~ X.1 + x3, data = wires5)
+summary(Multiple.model1)
+```
+c.
+```{r}
+confint(Multiple.model, level = 0.95)
+```
+x5 (bond width on the die) has the highest distance between confidence levels. Meanwhile, X.1 and x3 have the lowest distances between confidence levels. For each predictor value, we are 95% confident that they lie within the specified ranges above.
+
+d.
+```{r}
+summary(Multiple.model)
+```
+For every unit change in x4, there is a 0.0978 decrease in the average value of y.
+
+e.
+```{r}
+new <- data.frame(X.1 = 5.5, x2 = 19.3, x3 = 30.2, x4 = 90, x5 = 2, X.6 = 1.85)
+pred <- predict(Multiple.model, newdata = new, se.fit = TRUE, interval = "prediction", level = 0.95)
+pred
+```
+The predicted value for y is 8.88975.
+
+f.
+```{r}
+crPlots(Multiple.model, main = "Partial Residual Plots")
+```
+
+```{r}
+plot(Multiple.model, 2)
+```
+Only one of our assumptions was wrong: it turns out pull strength isn't impacted by die height when looking at partial residual plots. 
+When looking at normality through a normal qqplot, we see that all the points approximately are along the reference line. This means we can assume normality.
+
+Contributions:
+
+Christopher Hainzl - I wrote the code.
+
+Peter Bitanga - I helped with the processing of the data, as well as organization.
+
+Ryan Podzielny - I helped with the code and interpretations.
+
+Christopher Hakkenberg - I helped with the interpretations and analyzing the data.
+
+Christopher Barbieri - I helped with the interpretations.

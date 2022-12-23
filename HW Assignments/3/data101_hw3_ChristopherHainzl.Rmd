@@ -1,0 +1,111 @@
+---
+title: "Homework 3"
+author: "Christopher Hainzl"
+date: "2022-11-10"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries
+
+```{r packages}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+```
+
+## Question 1
+
+
+```{r}
+baseball <- read.table(file=
+"http://jse.amstat.org/datasets/baseball.dat.txt",
+header = F, col.names=c("salary", "batting.avg", "OBP", "runs", "hits",
+"doubles", "triples", "homeruns", "RBI", "walks", "strike.outs",
+"stolen. bases", "errors", "free.agency.elig", "free.agent.91",
+"arb.elig", "arb.91", "name"))
+head(baseball)
+```
+## 1a
+
+```{r}
+colSums(is.na(baseball))
+```
+- No, there isn't any missing data.
+
+```{r}
+# Determine the variable types of the columns
+sapply(baseball, class)
+```
+- 4 predictors are categorical (free.agency.elig, free.agent.91, arb.elig, arb.91), and 10 predictors are continuous, integer counts.
+
+## 1b
+
+```{r}
+# Histogram of salaries without log transformation
+ggplot(data = baseball, mapping = aes(x = salary)) +
+  geom_histogram(bins = 50, fill = "yellow") +
+  labs(title = "Salary Histogram (w/o log transformation)")
+```
+
+```{r}
+# perform log transformation on salary
+baseball[1] <- log(baseball[1])
+```
+
+```{r}
+# Histogram of salaries with log transformation
+ggplot(data = baseball, mapping = aes(x = salary)) +
+  geom_histogram(bins = 50, fill = "red") +
+  labs(title = "Salary Histogram (with log transformation)")
+```
+
+- The histogram without the log transformation appears to be right-skewed, while the histogram with the log transformation does not appear to have any sort of skewness.
+
+## Question 2
+
+## 2a
+
+```{r}
+set.seed(123)
+# Sample Indexes
+Index = sample(1:nrow(baseball), size = 0.7*nrow(baseball))
+# Splitting Data
+TrainData = baseball[Index,]
+dim(TrainData)
+TestData = baseball[-Index,]
+dim(TestData)
+```
+
+```{r}
+head(TrainData)
+```
+
+```{r}
+head(TestData)
+```
+
+## 2b and 2c
+
+```{r}
+# 2b
+fit.train <- lm(salary ~ batting.avg + OBP + 
+runs + hits + doubles + triples + homeruns + RBI + walks + strike.outs + stolen..bases + errors, 
+data = TrainData)
+
+# 2c
+summary(fit.train)
+```
+## 2d
+- When working with a 5% significance level and looking at the individual p-values, salary only appears to have a relationship with hits, home runs, and strikeouts (since the p-values for those three predictors are less than 0.05).
+
+## 2e
+
+```{r}
+# Use the model for the training data to predict the 
+# test data, and output mean squared error
+mean((TestData$salary - predict.lm(fit.train, TestData))^2)
+```

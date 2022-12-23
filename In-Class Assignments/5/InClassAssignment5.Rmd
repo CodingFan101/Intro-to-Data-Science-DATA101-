@@ -1,0 +1,77 @@
+---
+title: "In Class Assignment 5"
+author: "Christopher Hainzl, Christopher Hakkenberg, Christopher Barbieri, Ryan Podzielny, Peter Bitanga"
+date: "2022-11-18"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(readr)
+```
+
+```{r}
+data <- read.table("table12-16.txt", sep = ",", header = TRUE)
+head(data)
+```
+
+```{r}
+str(data)
+```
+
+```{r}
+data$Hth <- as.factor(data$Hth)
+```
+
+```{r}
+str(data)
+```
+
+```{r}
+colSums(is.na(data))
+```
+
+```{r}
+table(data$Hth)
+```
+
+```{r}
+prop.table(table(data$Hth))
+```
+
+```{r}
+logistic.model <- glm(Hth~Fib + gam, family = "binomial", data = data)
+summary(logistic.model)
+```
+
+# Part A
+
+Fib is related to the probability that a patient has an unhealthy level of ESR, and gam isn't. Fib has a p-value of 0.0491 (which is less than 0.05), and gam has a p-value of 0.1925 (which is greater than 0.05).
+
+# Part B
+Beta 0 is -12.7921, Beta 1 is 1.9104 (Fib), and Beta 2 is 0.1558 (gam).
+
+```{r}
+confint(logistic.model, level = 0.95)
+```
+
+Based on the values above, we are 95% confident that the estimates are within those ranges.
+
+# Part C
+```{r}
+prob_esr <- function(x, y) {
+  eee <- exp((-12.7921+(1.9104 * x) + (0.1558 * y)))
+  eee/(1+eee)
+}
+```
+
+```{r}
+prob_esr(2.52, 38)
+```
+
+Group 3: 
+Christopher Hainzl, Christopher Hakkenberg, Christopher Barbieri, Ryan Podzielny, Peter Bitanga
